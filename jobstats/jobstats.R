@@ -1,8 +1,8 @@
-#!/usr/bin/Rscript
+# trace.R
+#
+.version = "2014-03-25"
 
-version = "2013-11-19";
-
-plot.trace = function(f, sys="kalkyl", cores=8, do.png=TRUE)
+plot.trace = function(f, sys="milou", cores=16, do.png=TRUE)
 {
   col.GB = "black"; lty.GB = 1
   col.core = "blue"; lty.core = 2
