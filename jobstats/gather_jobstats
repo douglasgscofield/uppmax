@@ -8,7 +8,6 @@ my $version = "2014-04-16";
 use strict;
 use warnings;
 # use diagnostics;
-# use Time::Piece;
 
 use Getopt::Long qw(:config no_ignore_case);
 use File::Basename;
@@ -237,6 +236,7 @@ sub getJobstatsFiles($$@) {  # cluster jobid node-list
     my $cluster = shift; 
     my $jobid = shift; 
     my @node_list = @_;
+    # print STDERR "cluster:$cluster jobid:$jobid nodelist:", join(",", @node_list), "\n";
     my @file_list;
     foreach my $node ( @node_list ) {
 	my $fn = ( $hard_prefix ? "$PREFIX/$jobid" : "$PREFIX/$node/$jobid" );
