@@ -3,12 +3,11 @@
 # TODO: add usage of Martin's sqlite3 db if it is available (i.e. if we are on milou-b)
 # TODO: is there another, deeper, location for jobstats files we can check?
 
-my $version = "2014-04-16";
+my $version = "2014-04-02";
 
 use strict;
 use warnings;
 # use diagnostics;
-# use Time::Piece;
 
 use Getopt::Long qw(:config no_ignore_case);
 use File::Basename;
@@ -30,7 +29,6 @@ my $finishedjobinfo = "/sw/uppmax/bin/finishedjobinfo"; # -f
 my $plot_jobstats_R = "$CWD/plot_jobstats.R"; # -s
 my $prefix = "/sw/share/slurm"; # -x
 my $hard_prefix = "";    # -X
-my $db = "/proj/b2013023/statistics/general/general.sqlite";
 my $usage = "
 $NAME  [-h] [ -p dir ] [ -f file] -M cluster [ -n node[,node...] ] [ jobid [ jobid ... ] | - ]
 
@@ -152,63 +150,21 @@ sub runPlotJobstats(@);
 
 @nodes = parseNodes($nodes) if $nodes;
 
-
-# parse a single line from the database and return a hash
+# parse a single finishedjobinfo-formatted line and return a hash
 sub parseFinishedjobinfoLine($) {
     my $line = shift;
     chomp $line;
-    
-    # split line
-    my @line = split(/\|/, $line);
-
-    # init
-    my %jobinfo;
-
-    # assign values
-    $jobinfo{'jobid'} = $line[0];
-    $jobinfo{'nodes'} = $line[9];
-
-    # calculate end time from epoch
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($line[4]);
-    $year += 1900;
-    $jobinfo{'end_time'} = sprintf("%04d-%02d-%02dT%02d:%02d:%02d", $year, $mon, $mday, $hour, $min, $sec);
-
-
-
-    # calculate the runtime
-    # convert the runtime to a date, get days, hours, minues, seconds
-    ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(int($line[4]) - int($line[3]));
-
-    # make the days zero-indexed
-    $mday -= 1;
-
-    # if the runtime is more than a day
-    if($mday > 0){
-        # store it with the day number
-        $jobinfo{'runtime'} = sprintf("%02d-%02d:%02d:%02d", $mday, $hour, $min, $sec);
-
-    }else{
-        # store it without the day number
-        $jobinfo{'runtime'} = sprintf("%02d:%02d:%02d", $hour, $min, $sec);
-    }
-	
-    
-
-    $jobinfo{'procs'} = $line[6];
-    $jobinfo{'account'} = $line[1];
-
-    return(\%jobinfo);
+    my (undef, undef, $keyvals) = split (/ /, $line, 3);
+    return(0) if (! defined($keyvals));
+    my %h = $keyvals =~ /([^ ]+)=([^ ]+)/g;
+    return(\%h);
 }
 
-
-
-
-# discover jobinfo for a single job by querying the database
+# discover jobinfo for a single job using finishedjobinfo script
 sub jobInfo($) {
     my $j = shift;
-	    -f "$db" or die "\n*** Database file '$db' not available";
-	    # -f "sqlite3" or die "\n*** Sqlite3 not available";
-	    return parseFinishedjobinfoLine(qx(sqlite3 -noheader -list $db "SELECT * FROM jobs WHERE cluster='$cluster' AND job_id='$j'" 2> /dev/null));
+    -f "$finishedjobinfo" or die "\n*** finishedjobinfo script '$finishedjobinfo' not available";
+    return parseFinishedjobinfoLine(qx($finishedjobinfo -q -M $cluster -j $j));
 }
 
 # parse list of nodes returned by finishedjobinfo or provided on -n
@@ -220,14 +176,14 @@ sub parseNodes($) {
     # nodes=m2,m3,m4,m5
     # nonsensical results if finishedjobinfo-style and comma-separated are mixed
     if ($nodes !~ /\[/) { # 0 or 1 nodes or comma-separated
-	return ( $nodes =~ /,/ ? split(/,/, $nodes) : $nodes ); 
+        return ( $nodes =~ /,/ ? split(/,/, $nodes) : $nodes ); 
     }
     $nodes =~ s/^(.+)\[(.*)\]$/$2/g;  # strip off 'prefix'[ and ]
     my $node_prefix = $1;
     my @node_nums;
     foreach my $p ( split /,/, $nodes ) {
-	my @r = split /-/, $p;
-	push @node_nums, ($#r ? ($r[0] .. $r[1]) : $r[0]);
+        my @r = split /-/, $p;
+        push @node_nums, ($#r ? ($r[0] .. $r[1]) : $r[0]);
     }
     return map { $node_prefix . $_ } @node_nums;
 }
@@ -237,10 +193,11 @@ sub getJobstatsFiles($$@) {  # cluster jobid node-list
     my $cluster = shift; 
     my $jobid = shift; 
     my @node_list = @_;
+    # print STDERR "cluster:$cluster jobid:$jobid nodelist:", join(",", @node_list), "\n";
     my @file_list;
     foreach my $node ( @node_list ) {
-	my $fn = ( $hard_prefix ? "$PREFIX/$jobid" : "$PREFIX/$node/$jobid" );
-	-f $fn and -s $fn and push @file_list, $fn;
+        my $fn = ( $hard_prefix ? "$PREFIX/$jobid" : "$PREFIX/$node/$jobid" );
+        -f $fn and -s $fn and push @file_list, $fn;
     }
     return @file_list;
 }
@@ -264,9 +221,9 @@ sub reorderNodeList($$) {
     my @new_node_list;
     my %seen;
     foreach my $file ( @file_list ) {
-	my @p = split("/", $file);
-	push @new_node_list, $p[-2];  # node name
-	++$seen{$p[-2]};
+        my @p = split("/", $file);
+        push @new_node_list, $p[-2];  # node name
+        ++$seen{$p[-2]};
     }
     push @new_node_list, grep { $seen{$_} ? () : $_ } @old_node_list;
     return(@new_node_list);
@@ -282,7 +239,6 @@ sub runPlotJobstats(@) {
     return($flags);
 }
 
-
 my $header = "jobid\tcluster\tendtime\truntime\tflag_list\tbooked\tcore_list\tnode_list\tjobstats_list";
 
 while ( 1 ) {
@@ -291,11 +247,11 @@ while ( 1 ) {
     my $input_line;
 
     if ($stdin) {
-	$input_line = <>;
-	last if ! $input_line;
+        $input_line = <>;
+        last if ! $input_line;
     } else {
-	last if ! @jobs;
-	$jobid = shift @jobs;
+        last if ! @jobs;
+        $jobid = shift @jobs;
     }
 
     # $cluster already declared above
@@ -310,43 +266,42 @@ while ( 1 ) {
     my @jobstats_list;
 
     if (@nodes) {  # -n was used, use this list
-	@node_list = @nodes;
+        @node_list = @nodes;
     } else {  # discover using finishedjobinfo or stdin
-	my $ji;
-	if ($stdin) {
-	    $ji = parseFinishedjobinfoLine($input_line);
-	    die "*** Jobid cannot be found, inconsistency in stdin input" if ! $ji;
-	    $jobid = $ji->{jobid};
-	} else {
-	    $ji = jobInfo($jobid);
-	    if (! $ji) {  # couldn't find jobinfo, give error and skip to next
-		print STDERR "*** Jobid $jobid cannot be found\n";
-		next;
-	    }
-	    if (! scalar(grep /^$ji->{account}$/, @user_groups) and ! $in_staff) {
-		print STDERR "*** Please, do not check other projects (jobid $jobid in $ji->{account})\n";
-		next;
-	    }
-	}
-
-	@node_list = parseNodes($ji->{nodes});
-	$endtime = $ji->{end_time};
-	$runtime = $ji->{runtime};
-	$booked = $ji->{procs};
+        my $ji;
+        if ($stdin) {
+            $ji = parseFinishedjobinfoLine($input_line);
+            die "*** Jobid cannot be found, inconsistency in stdin input" if ! $ji;
+            $jobid = $ji->{jobid};
+        } else {
+            $ji = jobInfo($jobid);
+            if (! $ji) {  # couldn't find jobinfo, give error and skip to next
+                print STDERR "*** Jobid $jobid cannot be found\n";
+                next;
+            }
+            if (! scalar(grep /^$ji->{account}$/, @user_groups) and ! $in_staff) {
+                print STDERR "*** Please, do not check other projects (jobid $jobid in $ji->{account})\n";
+                next;
+            }
+        }
+        @node_list = parseNodes($ji->{nodes});
+        $endtime = $ji->{end_time};
+        $runtime = $ji->{runtime};
+        $booked = $ji->{procs};
     }
     @file_list = getJobstatsFiles($cluster, $jobid, @node_list);
     @node_list = reorderNodeList(\@node_list, \@file_list);
     foreach ( @file_list ) {
-	my $cores = getJobstatsFileCoreCount($_);
-	$total_cores += $cores;
-	push @core_list, $cores;
+        my $cores = getJobstatsFileCoreCount($_);
+        $total_cores += $cores;
+        push @core_list, $cores;
     }
     # check flags
     if (@file_list and @file_list < @node_list) {
-	push @flag_list, "nodes_overbooked:" . scalar(@node_list) . ":" . scalar(@file_list);
+        push @flag_list, "nodes_overbooked:" . scalar(@node_list) . ":" . scalar(@file_list);
     }
     if (@file_list and $booked ne '.' and $total_cores < $booked) {
-	push @flag_list, "cores_overbooked:" . $booked . ":" . $total_cores;
+        push @flag_list, "cores_overbooked:" . $booked . ":" . $total_cores;
     }
     # jobid cluster endtime runtime flag-list booked cores node-list jobstats-file-list
     my @fields;
@@ -362,13 +317,13 @@ while ( 1 ) {
 
     # if we have files to read, run plot_jobstats.R script to check more flags and produce a plot
     if (@file_list) {
-	my $pjs_flags = runPlotJobstats(@fields);
-	$fields[4] = $pjs_flags if $pjs_flags;
+        my $pjs_flags = runPlotJobstats(@fields);
+        $fields[4] = $pjs_flags if $pjs_flags;
     }
 
     if ($print_header) {  # don't print the header until ready to create output
-	print STDOUT $header, "\n" if ! $quiet;
-	$print_header = 0;
+        print STDOUT $header, "\n" if ! $quiet;
+        $print_header = 0;
     }
     print STDOUT join("\t", @fields), "\n" if ! $quiet;
 
