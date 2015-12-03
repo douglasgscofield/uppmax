@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my $use_groups = 1;
+
+my $usage = "Usage:  $0  user1  user2
+
+Show the groups common to two users.
+";
+sub usage {
+    print STDERR $usage;
+    exit 1;
+}
+
+my $U1 = shift or usage;
+my $U2 = shift or die "must supply two user names";
+my ($p1, $p2, @p1, @p2);
+if ($use_groups) {
+    $p1 = qx(groups $U1 | sed "s/^$U1 : //g");
+    $p2 = qx(groups $U2 | sed "s/^$U2 : //g");
+    chomp $p1;
+    chomp $p2;
+    @p1 = split(' ', $p1);
+    @p2 = split(' ', $p2);
+} else {
+    $p1 = qx(show_user $U1 | grep '^Project:' | sed 's/^Project:\\s\\+//g');
+    $p2 = qx(show_user $U2 | grep '^Project:' | sed 's/^Project:\\s\\+//g');
+    chomp $p1;
+    chomp $p2;
+    @p1 = split(',', $p1);
+    @p2 = split(',', $p2);
+}
+die "could not retrieve user 1 '$U1' project list" if ! @p1;
+# print STDERR "p1: ", join(" : ", @p1), "\n";
+die "could not retrieve user 2 '$U2' project list" if ! @p2;
+# print STDERR "p2: ", join(" : ", @p2), "\n";
+my (%union, %isect);
+$union{$_}++ && $isect{$_}++ foreach (@p1, @p2);
+# print STDERR "$_=$union{$_} " foreach (sort keys %union); print STDERR "\n";
+# print "Projects common to users $U1 and $U2: ", join(',', keys %isect), "\n";
+print join(' ', sort keys %isect), "\n";
+
