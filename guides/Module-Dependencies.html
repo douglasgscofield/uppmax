@@ -1,6 +1,6 @@
 <h1 id="managing-module-dependencies">Managing Module Dependencies</h1>
 <p>On UPPMAX and other clusters, one can frequently encounter problems with software tools that are not caused by the tools themselves, but instead are caused by conflicting dependencies between multiple tools in concurrent use.</p>
-<p>This is easiest to show with an example, where the <a href="cutadapt">https://cutadapt.readthedocs.org/en/stable/</a> tool works, and then doesn't, after a conflicting module load.</p>
+<p>This is easiest to show with an example, where the <a href="https://cutadapt.readthedocs.org/en/stable/">cutadapt</a> tool works, and then doesn't, after a conflicting module load.</p>
 <pre><code>milou-b: ~ $ module load bioinfo-tools cutadapt/1.8.0
 milou-b: ~ $ cutadapt -h
 cutadapt version 1.8
@@ -59,7 +59,7 @@ Currently Loaded Modules:
 <pre><code>The following have been reloaded with a version change:
   1) python/2.7.6 =&gt; python/2.7</code></pre>
 <h2 id="use-tool-versions-with-no-dependency-conflicts">2. Use tool versions with no dependency conflicts</h2>
-<p>Put the knowledge gained by using <code>module list</code>, together with our limited documentation at <a href="http://www.uppmax.uu.se/installed-software">http://www.uppmax.uu.se/installed-software</a>, to figure out which versions of different modules have compatible dependencies. After you find <code>pysam</code> on that page, you will see that <code>pysam/0.8.3</code> is the version that has <code>python/2.7.6</code> as its dependency, while <code>pysam/0.8.3-py27</code> that you were loading has <code>python/2.7</code> as its dependency, and that conflicts with what cutadapt needs. We should have loaded <code>pysam/0.8.3</code> instead.</p>
+<p>Put the knowledge gained by using <code>module list</code>, together with our limited documentation at <a href="http://www.uppmax.uu.se/installed-software">http://www.uppmax.uu.se/installed-software</a>, to figure out which versions of different modules have compatible dependencies. After you find <code>pysam</code> on that page, you will see that <code>pysam/0.8.3</code> is the version that has <code>python/2.7.6</code> as its dependency, while <code>pysam/0.8.3-py27</code> has <code>python/2.7</code> as its dependency, and that conflicts with what <code>cutadapt/1.8.0</code> needs. We should have loaded <code>pysam/0.8.3</code> instead.</p>
 <p>We have a few such dependencies listed for modules on the Installed Software page, but this information is incomplete and likely always will be. By using <code>module list</code> as noted above, you will have complete information.</p>
 <h2 id="load-and-unload-modules-as-you-need-them">3. Load and unload modules as you need them</h2>
 <p>Tools within different modules can only have problems arising from conflicting dependencies if the different modules are both loaded at the same time. It is better to load and unload modules as you need them. This can be particularly helpful with python- and Perl-based tools.</p>
