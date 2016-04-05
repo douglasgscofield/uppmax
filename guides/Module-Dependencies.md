@@ -42,7 +42,7 @@ This is a dependency, and if the python module is unloaded or a different versio
 
 This is particularly a problem for python- and Perl-based tools, for which different tools may depend upon different interpreter versions, or (more likely) the predominant version in use at installation was different, say python 2.7.6 *vs* 2.7.9.
 
-This is also a problem when using say two modules that themselves depend on different versions of a dependency.
+This is also a problem when using two modules that themselves depend on different versions of a mutual dependency.  In such cases, the source of the conflict might be less obvious.
 
     milou-b: ~ $ module list
 
@@ -67,11 +67,11 @@ Note the message about changing the python version while loading `pysam/0.8.3-py
 
 The application experts at UPPMAX try to reduce the likelihood of such issues by standardising on particular interpreter and compiler versions during installation. This is not always possible, as important bug fixes or performance enhancements might be available in later versions of an interpreter, or a tool requires specific features introduced in a later version.
 
-At times we do provide tool versions that depend upon different interpreter versions; in the above case, `pysam/0.8.3-py27` depends on `python/2.7`, while the `pysam/0.8.3` module depends on `python/2.7.6`, and would be a much better choice in this instance.  But in general, there is also little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.
+At times we provide module versions that depend upon different interpreter versions, such as for versions of the `pysam` module: `pysam/0.8.3-py27` depends on `python/2.7`, while the `pysam/0.8.3` module depends on `python/2.7.6`, and would be a much better choice in this example.  In general, however, there is little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.
 
-Tools themselves can do much more to manage their own dependencies independently.  For example, python-based tools can set up their own virtual environment so that the python interpreter and libraries used by the tool are specific versions fixed during installation.  Unfortunately, this is not common.
+Tools themselves can do much more to manage their own dependencies independently.  For example, python-based tools can set up their own virtual environment so that the interpreter, libraries and packages used by the tool are specific versions fixed during installation.  Unfortunately, this type of robust installation procedure is not common.
 
-Ultimately, it is the user's responsibility to manage dependency conflicts in tools.  Here are a few tips to help with this.
+Ultimately, it is the user's responsibility to manage dependency conflicts in tools loaded via the module system.  Here are a few tips to help with this.
 
 1. Check dependencies first
 ---------------------------
@@ -99,5 +99,5 @@ We often see (and I often write) SLURM scripts that contain a preamble that load
 
 For example, a SLURM script for a variant-calling pipeline starting from raw sequence data does not need to load a read-mapper module while performing QC with tools loaded with the `cutadapt`, `Trimmomatic`, or `FastQC` modules; does not need to have any of these modules loaded while mapping reads and creating BAM files with tools from the `bwa` and `samtools` modules; and does not need a read mapper module loaded when manipulating BAM files with `Picard` or calling variants with `GATK`.
 
-Some modules simply won't create conflicts, for example current versions of `GATK` won't conflict with python-based tools, nor will it conflict with compiled tools such as `BEDTools` or `bowtie2`.
+Some modules simply won't create conflicts, for example current versions of `GATK` won't conflict with python-based tools, and conflicts are less common between compiled tools such as `BEDTools` or `bowtie2`.
 

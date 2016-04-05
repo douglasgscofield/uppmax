@@ -31,7 +31,7 @@ milou-b: ~ $ module list
 Currently Loaded Modules:
   1) uppmax   2) bioinfo-tools   3) cutadapt/1.8.0   4) python/2.7</code></pre>
 <p>This is particularly a problem for python- and Perl-based tools, for which different tools may depend upon different interpreter versions, or (more likely) the predominant version in use at installation was different, say python 2.7.6 <em>vs</em> 2.7.9.</p>
-<p>This is also a problem when using say two modules that themselves depend on different versions of a dependency.</p>
+<p>This is also a problem when using two modules that themselves depend on different versions of a mutual dependency. In such cases, the source of the conflict might be less obvious.</p>
 <pre><code>milou-b: ~ $ module list
 
 Currently Loaded Modules:
@@ -52,9 +52,9 @@ Currently Loaded Modules:
   1) uppmax   2) bioinfo-tools   3) cutadapt/1.8.0   4) pysam/0.8.3-py27   5) python/2.7</code></pre>
 <p>Note the message about changing the python version while loading <code>pysam/0.8.3-py27</code>. This will (as we saw above) prevent us from using <code>cutadapt/1.8.0</code> while <code>pysam/0.8.3-py27</code> is loaded.</p>
 <p>The application experts at UPPMAX try to reduce the likelihood of such issues by standardising on particular interpreter and compiler versions during installation. This is not always possible, as important bug fixes or performance enhancements might be available in later versions of an interpreter, or a tool requires specific features introduced in a later version.</p>
-<p>At times we do provide tool versions that depend upon different interpreter versions; in the above case, <code>pysam/0.8.3-py27</code> depends on <code>python/2.7</code>, while the <code>pysam/0.8.3</code> module depends on <code>python/2.7.6</code>, and would be a much better choice in this instance. But in general, there is also little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.</p>
-<p>Tools themselves can do much more to manage their own dependencies independently. For example, python-based tools can set up their own virtual environment so that the python interpreter and libraries used by the tool are specific versions fixed during installation. Unfortunately, this is not common.</p>
-<p>Ultimately, it is the user's responsibility to manage dependency conflicts in tools. Here are a few tips to help with this.</p>
+<p>At times we provide module versions that depend upon different interpreter versions, such as for versions of the <code>pysam</code> module: <code>pysam/0.8.3-py27</code> depends on <code>python/2.7</code>, while the <code>pysam/0.8.3</code> module depends on <code>python/2.7.6</code>, and would be a much better choice in this example. In general, however, there is little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.</p>
+<p>Tools themselves can do much more to manage their own dependencies independently. For example, python-based tools can set up their own virtual environment so that the interpreter, libraries and packages used by the tool are specific versions fixed during installation. Unfortunately, this type of robust installation procedure is not common.</p>
+<p>Ultimately, it is the user's responsibility to manage dependency conflicts in tools loaded via the module system. Here are a few tips to help with this.</p>
 <h2 id="check-dependencies-first">1. Check dependencies first</h2>
 <p>Check dependencies of modules by using <code>module list</code> before and after a module is loaded. This will give you a clue to whether dependency problems are likely. When loading multiple modules, <strong>pay attention to messages</strong> like the one above:</p>
 <pre><code>The following have been reloaded with a version change:
@@ -66,4 +66,4 @@ Currently Loaded Modules:
 <p>Tools within different modules can only have problems arising from conflicting dependencies if the different modules are both loaded at the same time. It is better to load and unload modules as you need them. This can be particularly helpful with python- and Perl-based tools.</p>
 <p>We often see (and I often write) SLURM scripts that contain a preamble that loads several modules at once, even when the modules are not required simultaneously. This practice is helpful for self-documentation, but is also a potential source of conflicting dependencies.</p>
 <p>For example, a SLURM script for a variant-calling pipeline starting from raw sequence data does not need to load a read-mapper module while performing QC with tools loaded with the <code>cutadapt</code>, <code>Trimmomatic</code>, or <code>FastQC</code> modules; does not need to have any of these modules loaded while mapping reads and creating BAM files with tools from the <code>bwa</code> and <code>samtools</code> modules; and does not need a read mapper module loaded when manipulating BAM files with <code>Picard</code> or calling variants with <code>GATK</code>.</p>
-<p>Some modules simply won't create conflicts, for example current versions of <code>GATK</code> won't conflict with python-based tools, nor will it conflict with compiled tools such as <code>BEDTools</code> or <code>bowtie2</code>.</p>
+<p>Some modules simply won't create conflicts, for example current versions of <code>GATK</code> won't conflict with python-based tools, and conflicts are less common between compiled tools such as <code>BEDTools</code> or <code>bowtie2</code>.</p>
