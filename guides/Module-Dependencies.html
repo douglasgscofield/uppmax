@@ -23,7 +23,8 @@ milou-b: ~ $ module list
  
 Currently Loaded Modules:
   1) uppmax   2) bioinfo-tools   3) cutadapt/1.8.0   4) python/2.7.6</code></pre>
-<p>We see that loading <code>cutadapt/1.8.0</code> also resulted in loading <code>python/2.7.6</code>. This is a dependency, and if the python module is unloaded or a different version is loaded, as we did by loading <code>python/2.7</code> above, problems will start to appear.</p>
+<p>We see that loading <code>cutadapt/1.8.0</code> also resulted in loading <code>python/2.7.6</code>, and unloading (via <code>module unload</code>) the <code>cutadapt/1.8.0</code> module will also unload <code>python/2.7.6</code>.</p>
+<p>This is a dependency, and if the python module is unloaded or a different version is loaded, as we did by loading <code>python/2.7</code> above, problems will start to appear.</p>
 <pre><code>milou-b: ~ $ module load cutadapt/1.8.0 python/2.7
 milou-b: ~ $ module list
 
@@ -50,7 +51,7 @@ milou-b: ~ $ module list
 Currently Loaded Modules:
   1) uppmax   2) bioinfo-tools   3) cutadapt/1.8.0   4) pysam/0.8.3-py27   5) python/2.7</code></pre>
 <p>Note the message about changing the python version while loading <code>pysam/0.8.3-py27</code>. This will (as we saw above) prevent us from using <code>cutadapt/1.8.0</code> while <code>pysam/0.8.3-py27</code> is loaded.</p>
-<p>The application experts at UPPMAX try to reduce the likelihood of such issues by standardising on particular interpreter and compiler versions during installation. This is not always possible, as important bug fixes or performance enhancements might be available available in later versions of an interpreter, or a tool requires specific features introduced in a later version.</p>
+<p>The application experts at UPPMAX try to reduce the likelihood of such issues by standardising on particular interpreter and compiler versions during installation. This is not always possible, as important bug fixes or performance enhancements might be available in later versions of an interpreter, or a tool requires specific features introduced in a later version.</p>
 <p>At times we do provide tool versions that depend upon different interpreter versions; in the above case, <code>pysam/0.8.3-py27</code> depends on <code>python/2.7</code>, while the <code>pysam/0.8.3</code> module depends on <code>python/2.7.6</code>, and would be a much better choice in this instance. But in general, there is also little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.</p>
 <p>Tools themselves can do much more to manage their own dependencies independently. For example, python-based tools can set up their own virtual environment so that the python interpreter and libraries used by the tool are specific versions fixed during installation. Unfortunately, this is not common.</p>
 <p>Ultimately, it is the user's responsibility to manage dependency conflicts in tools. Here are a few tips to help with this.</p>

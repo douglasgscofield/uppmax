@@ -30,7 +30,9 @@ The message results from a conflict in the version of python expected by `cutada
     Currently Loaded Modules:
       1) uppmax   2) bioinfo-tools   3) cutadapt/1.8.0   4) python/2.7.6
 
-We see that loading `cutadapt/1.8.0` also resulted in loading `python/2.7.6`.  This is a dependency, and if the python module is unloaded or a different version is loaded, as we did by loading `python/2.7` above, problems will start to appear.
+We see that loading `cutadapt/1.8.0` also resulted in loading `python/2.7.6`, and unloading (via `module unload`) the `cutadapt/1.8.0` module will also unload `python/2.7.6`.
+
+This is a dependency, and if the python module is unloaded or a different version is loaded, as we did by loading `python/2.7` above, problems will start to appear.
 
     milou-b: ~ $ module load cutadapt/1.8.0 python/2.7
     milou-b: ~ $ module list
@@ -63,7 +65,7 @@ This is also a problem when using say two modules that themselves depend on diff
 
 Note the message about changing the python version while loading `pysam/0.8.3-py27`.  This will (as we saw above) prevent us from using `cutadapt/1.8.0` while `pysam/0.8.3-py27` is loaded.
 
-The application experts at UPPMAX try to reduce the likelihood of such issues by standardising on particular interpreter and compiler versions during installation. This is not always possible, as important bug fixes or performance enhancements might be available available in later versions of an interpreter, or a tool requires specific features introduced in a later version.
+The application experts at UPPMAX try to reduce the likelihood of such issues by standardising on particular interpreter and compiler versions during installation. This is not always possible, as important bug fixes or performance enhancements might be available in later versions of an interpreter, or a tool requires specific features introduced in a later version.
 
 At times we do provide tool versions that depend upon different interpreter versions; in the above case, `pysam/0.8.3-py27` depends on `python/2.7`, while the `pysam/0.8.3` module depends on `python/2.7.6`, and would be a much better choice in this instance.  But in general, there is also little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.
 
