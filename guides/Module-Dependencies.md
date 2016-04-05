@@ -69,7 +69,7 @@ The application experts at UPPMAX try to reduce the likelihood of such issues by
 
 At times we provide module versions that depend upon different interpreter versions, such as for versions of the `pysam` module: `pysam/0.8.3-py27` depends on `python/2.7`, while the `pysam/0.8.3` module depends on `python/2.7.6`, and would be a much better choice in this example.  In general, however, there is little time available to reinstall already-installed tools where the only change in installation is in the interpreter version used.
 
-Tools themselves can do much more to manage their own dependencies independently.  For example, python-based tools can set up their own virtual environment so that the interpreter, libraries and packages used by the tool are specific versions fixed during installation.  Unfortunately, this type of robust installation procedure is not common.
+Tools themselves can do much more to manage their own dependencies independently.  For example, python-based tools can set up their own virtual environment so that the interpreter, libraries and packages used by the tool are specific versions fixed during installation.  Unfortunately, tools that provide this type of robust installation procedure are not common.
 
 Ultimately, it is the user's responsibility to manage dependency conflicts in tools loaded via the module system.  Here are a few tips to help with this.
 
