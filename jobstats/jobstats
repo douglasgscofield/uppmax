@@ -46,6 +46,7 @@ my $o_cluster = $ENV{'SNIC_RESOURCE'} ? $ENV{'SNIC_RESOURCE'} : 'milou';  # -M
 my $o_running         = 0;  # -r | --running, also sets $o_source to "squeue"
 my $o_source          = "fji";
 my $o_plot            = 0;  # -p
+my $o_database        = 0;  # --database
 my $o_bigplot         = 0;  # -b
 my $o_memory          = 0;  # -m
 my $o_cpufree         = 3.0;  # --cpu-free
@@ -312,6 +313,7 @@ GetOptions("M=s"         => \$o_cluster,
            "memory"      => \$o_memory,
            "verbose"     => \$o_verbose,
            "plot"        => \$o_plot,
+           "database"    => \$o_database,
            "big-plot"    => \$o_bigplot,
            "d"           => \$o_header,
            "cpu-free=f"  => \$o_cpufree,
@@ -395,6 +397,44 @@ sub parseFinishedjobinfoLine($) {
     my %h = $keyvals =~ /([^ ]+)=([^ ]+)/g;
     $h{jobname} = "'$h{jobname}'";
     return(\%h);
+}
+
+# get all the jobs run by a project during the last 30 days, in a finishedjobinfo format
+sub martinsMagicalDatabase {
+    use DBI;
+    use Time::Piece;
+    use Time::Seconds;
+
+    my ($o_cluster, $o_project) = @_;
+
+    # get jobs from the last 30 days
+    my $period_start = (localtime() - ONE_MONTH)->strftime("%Y-%m-%d");
+    my $dbh = DBI->connect("dbi:SQLite:dbname=/proj/b2013023/statistics/general/general.sqlite", "", "");
+    my $sth = $dbh->prepare("SELECT * FROM jobs WHERE date>=? AND cluster=? AND proj_id=?;");
+    $sth->execute($period_start, $o_cluster, $o_project);
+    my $results = "";
+
+    # for each job found
+    while (my @row = $sth->fetchrow_array) {
+        # convert epoch to formatted date
+        my $job_start = (Time::Piece->strptime($row[4], '%s'))->strftime('%Y-%m-%dT%H:%M:%S');
+        my $job_end = (Time::Piece->strptime($row[5], '%s'))->strftime('%Y-%m-%dT%H:%M:%S');
+
+        my $job_duration = Time::Piece->strptime($row[5], '%s') - Time::Piece->strptime($row[4], '%s');
+        my $job_runtime = "";
+
+        # jobs longer than a day has the days printed out
+        if($job_duration <= (24*60*60)){
+            $job_runtime = sprintf("%02d", ($job_duration/(60*60))%24).":".sprintf("%02d", ($job_duration/60)%60).":".sprintf("%02d", $job_duration%60);
+        }else{
+            $job_runtime = int($job_duration/(24*60*60))."-".sprintf("%02d", ($job_duration/(60*60))%24).":".sprintf("%02d", ($job_duration/60)%60).":".sprintf("%02d", $job_duration%60);
+        }
+
+        # construct finishedjobinfo row
+        $results .= "$row[0] jobid=$row[1] jobstate=$row[11] username=$row[3] account=$row[2] nodes=$row[9] procs=$row[7] partition=$row[6] jobname=$row[10] timelimit=not-set submit_time=not-set start_time=$job_start end_time=$job_end runtime=$job_runtime margin=not-set queuetime=not-set\n";
+    }
+    chomp($results);
+    return $results;
 }
 
 # discover jobinfo for a single job using finishedjobinfo script
@@ -515,10 +555,20 @@ sub print_JobRun(@) {
 
 @nodes = parseNodes($o_nodes) if $o_nodes;
 
-if ($o_project) {
+# get info using finishedjobinfo
+if ($o_project and !$o_database) {
     my $cmd = "$o_finishedjobinfo -q -M $o_cluster $o_project";
     print STDERR "Running '$cmd' through a pipe to get more information, please be patient...\n";
     open(PROJECT, "$cmd |") or die "could not run $o_finishedjobinfo for project '$o_project': $!";
+}
+
+# get info using database
+if ($o_project and $o_database) {
+
+    # call sub to get finishedjobinfo identical data
+    my $results = martinsMagicalDatabase($o_cluster, $o_project);
+    print STDERR "Fetching data from the database to get more information, please be patient...\n";
+    open(PROJECT, "echo -e \"$results\" |") or die "could not get database results for project '$o_project': $!"; 
 }
 
 while ( 1 ) {
