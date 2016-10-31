@@ -5,17 +5,22 @@ use warnings;
 
 my $use_groups = 1;
 
-my $usage = "Usage:  $0  user1  user2
+my $usage = "
+Usage:  $0  user1  [ user2 ]
 
-Show the groups common to two users.
+Show the groups common to two users.  The second user is you, by default.
+
 ";
 sub usage {
+    my $msg = shift;
+    print STDERR "$msg\n" if $msg;
     print STDERR $usage;
     exit 1;
 }
 
 my $U1 = shift or usage;
-my $U2 = shift or die "must supply two user names";
+my $U2 = shift || getpwuid( $< );
+usage "Could not get second user" if not $U2;
 my ($p1, $p2, @p1, @p2);
 if ($use_groups) {
     $p1 = qx(groups $U1 | sed "s/^$U1 : //g");
