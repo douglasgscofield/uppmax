@@ -8,14 +8,16 @@ Umask=$(umask)
 echo User $USER, umask is $Umask
 if [ "$Umask" != "0007" ] ; then
 cat << __UMASK__
-*** umask should be changed ***   Add the line
+*** To ensure all project members can work with newly-created files and directories,
+*** and that all newly-created files and directories are private to project members,
+*** the umask should be set to 0007.  Add
 
 umask 0007
 
-to the end of the file .bashrc in your UPPMAX home directory.
+to the end of the file .bashrc in the UPPMAX home directory.
 __UMASK__
 else
-	echo umask is correct
+	echo umask ensures project member access and content privacy
 fi
 echo
 
@@ -28,7 +30,7 @@ User=$3
 
 if [ "$Head" = "" -o ! -e "$Head" -o "$Project" = "" ] ; then
 cat << __USAGE__
-Usage:  $0 head-directory project [ user ]
+Usage:  ${0##*/} head-directory project [ user ]
 
 Scan head-directory, which is part of the specified UPPMAX project, and look
 for files and directories owned by the user which do not match the match the
