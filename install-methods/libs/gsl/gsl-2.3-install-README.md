@@ -1,9 +1,9 @@
-# gsl-1.16-install-README.md, douglas.scofield@ebc.uu.se
+# gsl-2.3-install-README.md, douglas.scofield@ebc.uu.se
 
 TITLE
 =====
 
-    Gnu Scientific Library 1.16
+    Gnu Scientific Library 2.3
 
 DESCRIPTION
 -----------
@@ -28,16 +28,16 @@ MODULE REQUIREMENTS
 
 Built with
 
-    gcc/4.8.3
+    gcc/6.3.0
 
 
 LOG
 ---
 
     TOOL=/sw/libs/gsl
-    VERSION=1.16
+    VERSION=2.3
     TOOLDIR=$TOOL/$VERSION
-    CLUSTER=milou
+    CLUSTER=${CLUSTER:?CLUSTER must be set}
     CLUSTERDIR=$TOOLDIR/$CLUSTER
     mkdir -p $TOOL
     cd $TOOL
@@ -45,14 +45,15 @@ LOG
     cd $TOOLDIR
     mkdir -p src $CLUSTER 
     cd src
-    wget http://ftp.df.lth.se/pub/ftp.gnu.org/pub/gnu/gsl/gsl-${VERSION}.tar.gz
+    [[ -f gsl-${VERSION}.tar.gz ]] || wget http://ftp.df.lth.se/pub/ftp.gnu.org/pub/gnu/gsl/gsl-${VERSION}.tar.gz
     tar xzf gsl-${VERSION}.tar.gz 
-    cd gsl-${VERSION}/
+    mv gsl-${VERSION} gsl-${VERSION}-$CLUSTER
+    cd gsl-${VERSION}-$CLUSTER
 
 Now load pieces for the build and build it.
 
     module load build-tools
-    module load gcc/4.8.3
+    module load gcc/6.3.0
 
     ./configure --prefix=$CLUSTERDIR
     make
@@ -74,33 +75,9 @@ mf file we need
     prepend-path MANPATH           $modroot/share/man
     prepend-path PKG_CONFIG_PATH   $modroot/lib/pkgconfig
 
-2016-12-19: We also must symlink `lib64` to `lib` or gcc might not link it correctly.
+2016-12-19: We also must symlink `lib64` to `lib` or dump gcc might not link it correctly.
 
     cd $CLUSTERDIR
     ln -s lib lib64
 
 Set up for other systems.
-
-    cd $TOOLDIR
-    ln -s ./milou nestor
-    ln -s ./milou halvan
-
-Repeat for tintin.
-
-    TOOL=/sw/libs/gsl
-    VERSION=1.16
-    TOOLDIR=$TOOL/$VERSION
-    CLUSTER=tintin
-    CLUSTERDIR=$TOOLDIR/$CLUSTER
-    cd $TOOLDIR
-    mkdir -p $CLUSTER 
-    cd src
-    cd gsl-${VERSION}/
-    make clean
-    module load build-tools
-    module load gcc/4.8.3
-    ./configure --prefix=$CLUSTERDIR
-    make
-    make install
-
-
