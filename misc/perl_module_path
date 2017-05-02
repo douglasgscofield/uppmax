@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+
+# for each argument (a module name), print the path where it is found
+
+# modified from http://www.symkat.com/find-a-perl-modules-path
+
+use strict;
+use warnings;
+use feature 'say';
+
+for my $module (@ARGV) {
+    my $package = $module;
+
+    # From This::That to This/That.pm
+    s/::/\//g, s/$/.pm/ for $module;
+
+    say "$package => $INC{$module}" if require $module;
+}
