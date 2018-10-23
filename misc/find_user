@@ -1,0 +1,28 @@
+#!/usr/bin/perl -T
+# What: Find username by part of human name or email
+# Auth: Wesley Schaal, wesley.schaal@farmbio.uu.se
+# When: 2014-01-14
+# Note: Using Perl to bypass quoting issues in bash
+#       but skipping DBI module to allow anyone to run this.
+#       Apparantly, no Swedish characters in UPPMAX user tables
+# Vers: 0.6
+# ARG1: portion of name or email, eg: wes
+
+use strict; use warnings; # taint on
+$ENV{'PATH'} = '/bin:/usr/bin';
+delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV'};
+
+my $vic = shift or 
+    print("\nGive me a name, email or at least something\n"),exit(1);
+($vic) = $vic =~ /([A-Za-z0-9\.@ -]+)/;
+
+my $mod = shift || ''; 
+
+my $dat = '/proj/b2013023/projects/wes/public';
+my $sql = $mod eq 'mail' ? 'select username,mail ' : 'select username,name ';
+$sql .= "from users where mail like '%$vic%' or name like '%$vic%' order by name;";
+
+if ($mod eq 'debug') { print "$sql\n"; exit(0) }
+my $cmd = qq(echo "$sql" | sqlite3 -init $dat/.sqlite-find $dat/uppmax.sqlite);
+
+system $cmd;
